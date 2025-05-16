@@ -3,6 +3,8 @@ using Azure.Identity;
 using OpenAI;
 using OpenAI.RealtimeConversation;
 using System.ClientModel;
+using System.Text;
+using System.Text.Json;
 #pragma warning disable OPENAI002
 
 public class Program
@@ -14,27 +16,18 @@ public class Program
         RealtimeConversationClient client = GetConfiguredClient();
         using RealtimeConversationSession session = await client.StartConversationSessionAsync();
 
-        // We'll add a simple function tool that enables the model to interpret user input to figure out when it
-        // might be a good time to stop the interaction.
-        ConversationFunctionTool finishConversationTool = new()
-        {
-            Name = "user_wants_to_finish_conversation",
-            Description = "Invoked when the user says goodbye, expresses being finished, or otherwise seems to want to stop the interaction.",
-            Parameters = BinaryData.FromString("{}")
-        };
         FunctionToolAdapter toolsAdapter = new();
         ConversationSessionOptions sessionOptions = new();
-        sessionOptions.Tools.Add(finishConversationTool);
         toolsAdapter.Register(sessionOptions);
 
         sessionOptions.InputTranscriptionOptions = new()
         {
-            Model = "gpt-4o-mini-transcribe" // "whisper-1",
+            Model = "whisper-1",
         };
 
         // Now we configure the session using the tool we created along with transcription options that enable input
         // audio transcription with whisper.
-        await session.ConfigureSessionAsync( sessionOptions );
+        await session.ConfigureSessionAsync(sessionOptions);
 
         // For convenience, we'll proactively start playback to the speakers now. Nothing will play until it's enqueued.
         SpeakerOutput speakerOutput = new();
@@ -42,7 +35,8 @@ public class Program
         // With the session configured, we start processing commands received from the service.
         await foreach (ConversationUpdate update in session.ReceiveUpdatesAsync())
         {
-            // session.created is the very first command on a session and lets us know that connection was successful.
+            #region Session Started
+            // ssion.created is the very first command on a session and lets us know that connection was successful.
             if (update is ConversationSessionStartedUpdate)
             {
                 Console.WriteLine($" <<< Connected: session started");
@@ -55,11 +49,13 @@ public class Program
                     Console.WriteLine($" >>> Listening to microphone input");
                     Console.WriteLine($" >>> (Just tell the app you're done to finish)");
                     Console.WriteLine();
-                    
+
                     await session.SendInputAudioAsync(microphoneInput);
                 });
             }
+            #endregion
 
+            #region  User Started Speaking
             // input_audio_buffer.speech_started tells us that the beginning of speech was detected in the input audio
             // we're sending from the microphone.
             if (update is ConversationInputSpeechStartedUpdate speechStartedUpdate)
@@ -70,14 +66,18 @@ public class Program
                 // item so that the model doesn't "remember things it didn't say" -- that's not demonstrated here.
                 speakerOutput.ClearPlayback();
             }
+            #endregion
 
+            #region  User Done Speaking
             // input_audio_buffer.speech_stopped tells us that the end of speech was detected in the input audio sent
             // from the microphone. It'll automatically tell the model to start generating a response to reply back.
             if (update is ConversationInputSpeechFinishedUpdate speechFinishedUpdate)
             {
                 Console.WriteLine($" <<< End of speech detected @ {speechFinishedUpdate.AudioEndTime}");
             }
+            #endregion
 
+            #region  Transcription Updates
             // conversation.item.input_audio_transcription.completed will only arrive if input transcription was
             // configured for the session. It provides a written representation of what the user said, which can
             // provide good feedback about what the model will use to respond.
@@ -85,7 +85,9 @@ public class Program
             {
                 Console.WriteLine($" >>> USER: {transcriptionFinishedUpdate.Transcript}");
             }
+            #endregion
 
+            #region  Incremental Playback
             // Item streaming delta updates provide a combined view into incremental item data including output
             // the audio response transcript, function arguments, and audio data.
             if (update is ConversationItemStreamingPartDeltaUpdate deltaUpdate)
@@ -96,7 +98,7 @@ public class Program
                 {
                     speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
                 }
-                
+
             }
 
             // response.output_item.done tells us that a model-generated item with streaming content is completed.
@@ -109,14 +111,29 @@ public class Program
                 {
                     ConversationItem funtionOutput = toolsAdapter.Trigger(itemFinishedUpdate.FunctionCallId, itemFinishedUpdate.FunctionName, itemFinishedUpdate.FunctionCallArguments);
 
-                    if( funtionOutput != null ) {
+                    if (funtionOutput != null)
+                    {
                         await session.AddItemAsync(funtionOutput);
                     }
                 }
 
             }
 
-             if (update is ConversationResponseFinishedUpdate turnFinishedUpdate)
+
+            // error commands, as the name implies, are raised when something goes wrong.
+            if (update is ConversationErrorUpdate errorUpdate)
+            {
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine($" <<< ERROR: {errorUpdate.Message}");
+                Console.WriteLine(errorUpdate.GetRawContent().ToString());
+                break;
+            }
+
+            #endregion
+
+            # region Model Response Finished
+            if (update is ConversationResponseFinishedUpdate turnFinishedUpdate)
             {
                 Console.WriteLine($"  -- Model turn generation finished. Status: {turnFinishedUpdate.Status}");
 
@@ -128,18 +145,9 @@ public class Program
                     Console.WriteLine($"  -- Ending client turn for pending tool responses");
                     await session.StartResponseAsync();
                 }
-               
-            }
 
-            // error commands, as the name implies, are raised when something goes wrong.
-            if (update is ConversationErrorUpdate errorUpdate)
-            {
-                Console.WriteLine();
-                Console.WriteLine();
-                Console.WriteLine($" <<< ERROR: {errorUpdate.Message}");
-                Console.WriteLine(errorUpdate.GetRawContent().ToString());
-                break;
             }
+            #endregion
         }
     }
 
