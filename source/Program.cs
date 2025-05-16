@@ -29,7 +29,7 @@ public class Program
 
         sessionOptions.InputTranscriptionOptions = new()
         {
-            Model = "whisper-1",
+            Model = "gpt-4o-mini-transcribe" // "whisper-1",
         };
 
         // Now we configure the session using the tool we created along with transcription options that enable input
