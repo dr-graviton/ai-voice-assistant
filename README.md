@@ -1,6 +1,6 @@
 ## About
 
-This tutorial allows you to build a voice enabled AI assistant using OpenAI's GPT 4o realtime audio model. This codebase is build from [Azure Sample] (https://github.com/Azure-Samples/aoai-realtime-audio-sdk).
+This tutorial allows you to build a voice enabled AI assistant using OpenAI's GPT 4o realtime audio model. This codebase is build from [Azure Sample] (https://github.com/Azure-Samples/aoai-realtime-audio-sdk). 
 
 ## Setup
 You would need some tools and services to get started. Follow these instructions to setup your environment [Link](Documentation/Setup.md)
