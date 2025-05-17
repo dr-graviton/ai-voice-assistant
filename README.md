@@ -2,11 +2,9 @@
 
 This tutorial allows you to build a voice enabled AI assistant using OpenAI's GPT 4o realtime audio model. This codebase is build from [Azure Sample] (https://github.com/Azure-Samples/aoai-realtime-audio-sdk).
 
-## Prereqs
-1. Azure OpenAI Service in a region that supports realtime-audio model [Model Documentation] (https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models?tabs=global-standard%2Cstandard-chat-completions#gpt-4o-realtime-preview)
-2. [VS Code] (https://code.visualstudio.com/)
-3. [Dotnet 8 SDK] (https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-4. [Git Tools](https://git-scm.com/downloads/win)
+## Setup
+You would need some tools and services to get started. Follow these instructions to setup your environment [Link](Documentation/Setup.md)
+
 
 ## Outline
 This tutorial is organized into the following chapters:
