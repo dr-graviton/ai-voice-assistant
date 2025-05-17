@@ -6,11 +6,23 @@ public class FunctionToolAdapter {
     private IFunctionTool[] tools = new IFunctionTool[] {
     };
 
-    public void Register(ConversationSessionOptions options) {
-        foreach (IFunctionTool tool in tools) {
+    public void Register(ConversationSessionOptions options)
+    {
+        foreach (IFunctionTool tool in tools)
+        {
             ConversationFunctionTool metadata = tool.GetToolMetadata();
-            options.Tools.Add( metadata );
+            options.Tools.Add(metadata);
         }
+
+        options.Tools.Add(
+            // We'll add a simple function tool that enables the model to interpret user input to figure out when it
+            // might be a good time to stop the interaction.
+            new ConversationFunctionTool()
+            {
+                Name = "user_wants_to_finish_conversation",
+                Description = "Invoked when the user says goodbye, expresses being finished, or otherwise seems to want to stop the interaction.",
+                Parameters = BinaryData.FromString("{}")
+            });
     }
 
     public ConversationItem Trigger(string id, string toolName, string paramsJson) {

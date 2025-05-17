@@ -1,11 +1,11 @@
 
 
-## Usage
+## Setup
+You would need some tools and services to get started. Follow these instructions to setup your environment (Link)[Documentation/Setup.md]
 
-1. Set the `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` environment variables to match your `/realtime`-enabled Azure OpenAI resource
-  - Alternatively, if your Azure OpenAI Service resource is configured for managed identity, you can set the `AZURE_OPENAI_USE_ENTRA` environment variable to `true` to employ `DefaultAzureCredential` token-based authentication
-  - If you'd like to use the non-Azure OpenAI v1 endpoint, don't set `AZURE_OPENAI_ENDPOINT` and use `OPENAI_API_KEY` as the source for authentication, instead
-2. `dotnet run` (or build/run from `RealtimeInteractiveConsole.csproj`)
+## Run 
+Run the app either from command line of from VSCode
+1. `dotnet run` (or build/run from `RealtimeInteractiveConsole.csproj`)
 
 Example output:
 

@@ -40,9 +40,9 @@ public class WeatherTool : IFunctionTool
         return get_weather_for_location(location, unit);
     }
 
-    public static string get_weather_for_location(string location, string unit)
+    public static string get_weather_for_location(string location)
     {
-        Console.WriteLine($" <<< get_weather_for_location: location={location}, unit={unit}");
+        Console.WriteLine($" <<< get_weather_for_location: location={location}");
         return $"The weather in {location} is 72°F and sunny.";
     }
     
